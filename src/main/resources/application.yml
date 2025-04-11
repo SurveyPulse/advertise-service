@@ -1,0 +1,77 @@
+server:
+  port: 8086
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+spring:
+  application:
+    name: advertise-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/advertise_service?serverTimezone=UTC
+    username: root
+    password: worldcup7!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # 첫 배포 시 'create', 그 후에는 'update' 권장
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        show_sql: true
+        default_batch_fetch_size: 100
+    open-in-view: false
+
+  sql:
+    init:
+      mode: never
+
+  jwt:
+    issuer: dsada
+    secret: your-very-strong-secret-key-which-is-at-least-32-characters-long
+
+logging:
+  level:
+    com.example.response_service.client: DEBUG
+    feign.Logger: DEBUG
+
+feign:
+  survey-service-url: http://localhost:8083
+  user-service-url: http://localhost:8081
+  report-service-url: http://localhost:8085
+
+  client:
+    config:
+      default:
+        loggerLevel: FULL
+
+resilience4j.circuitbreaker:
+  instances:
+    userService:
+      registerHealthIndicator: true
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 5
+      permittedNumberOfCallsInHalfOpenState: 3
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10s
+    surveyService:
+      registerHealthIndicator: true
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 5
+      permittedNumberOfCallsInHalfOpenState: 3
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10s
+
