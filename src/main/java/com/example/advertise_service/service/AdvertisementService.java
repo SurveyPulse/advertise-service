@@ -54,7 +54,7 @@ public class AdvertisementService {
 
         if (imageFile != null && !imageFile.isEmpty()) {
             String fileName = fileStorageService.storeFile(imageFile);
-            String imageUrl = "/uploads/" + fileName;
+            String imageUrl = fileName;
             log.info("이미지 파일 저장 완료, 파일명: {}", fileName);
             advertisement = Advertisement.builder()
                                          .title(advertisement.getTitle())
@@ -85,7 +85,7 @@ public class AdvertisementService {
         String imageUrl = advertisement.getImageUrl();
         if (imageFile != null && !imageFile.isEmpty()) {
             String fileName = fileStorageService.storeFile(imageFile);
-            imageUrl = "/uploads/" + fileName;
+            imageUrl = fileName;
             log.info("수정용 이미지 파일 저장 완료, 새 파일명: {}", fileName);
         } else {
             log.info("이미지 파일 변경 없음 - 기존 이미지 유지");
@@ -104,6 +104,17 @@ public class AdvertisementService {
                                                                  log.error("삭제 실패: 광고 ID {} not found", advertisementId);
                                                                  return new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND);
                                                              });
+
+        String imageUrl = advertisement.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            try {
+                fileStorageService.deleteFile(imageUrl);
+                log.info("S3 파일 삭제 완료, URL: {}", imageUrl);
+            } catch (Exception e) {
+                log.error("S3 파일 삭제 실패, URL: {}", imageUrl, e);
+            }
+        }
+
         advertisementRepository.delete(advertisement);
         log.info("광고 삭제 성공: 광고 ID {}", advertisementId);
     }

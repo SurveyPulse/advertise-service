@@ -78,7 +78,7 @@ resilience4j.circuitbreaker:
 aws:
   region: ap-northeast-2
   s3:
-    bucket-name: surveypulse-advertisement-files
+    bucket-name:
   credentials :
     access-key:
     secret-key:

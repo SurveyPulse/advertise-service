@@ -5,6 +5,7 @@ import com.example.advertise_service.dto.response.AdvertisementResponse;
 import com.example.advertise_service.service.AdvertisementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,7 +31,7 @@ public class AdvertisementController {
         return ResponseEntity.ok(responses);
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AdvertisementResponse> createAdvertisement(
             @RequestPart("advertisement") AdvertisementRequest request,
             @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
@@ -39,7 +40,7 @@ public class AdvertisementController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{advertisementId}")
+    @PutMapping(value = "/{advertisementId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AdvertisementResponse> updateAdvertisement(
             @PathVariable Long advertisementId,
             @RequestPart("advertisement") AdvertisementRequest request,

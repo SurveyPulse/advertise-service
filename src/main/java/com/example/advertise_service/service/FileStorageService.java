@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
@@ -27,7 +29,6 @@ public class FileStorageService {
         try {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
-            // 필요에 따라 content type 설정: metadata.setContentType(file.getContentType());
             amazonS3.putObject(bucketName, fileName, file.getInputStream(), metadata);
         } catch (IOException ex) {
             throw new RuntimeException("S3에 파일 저장에 실패하였습니다: " + fileName, ex);
@@ -37,4 +38,11 @@ public class FileStorageService {
         // 예: return "https://d111111abcdef8.cloudfront.net/" + fileName;
         return amazonS3.getUrl(bucketName, fileName).toString();
     }
+
+    public void deleteFile(String fileUrl) {
+        String encodedFileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+        String decodedFileName = URLDecoder.decode(encodedFileName, StandardCharsets.UTF_8);
+        amazonS3.deleteObject(bucketName, decodedFileName);
+    }
+
 }
