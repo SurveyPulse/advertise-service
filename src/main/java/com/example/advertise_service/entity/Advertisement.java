@@ -1,36 +1,31 @@
 package com.example.advertise_service.entity;
 
-import com.example.global.common.BaseEntity;
-import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
+@Document(collection = "advertisements")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "advertisements")
-public class Advertisement extends BaseEntity {
+public class Advertisement {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long advertisementId;
+    private String advertisementId;  // MongoDB ObjectId 혹은 문자열
 
     private String title;
-
     private String content;
-
     private String imageUrl;
-
     private LocalDateTime startDate;
-
     private LocalDateTime endDate;
 
     @Builder
-    public Advertisement(String title, String content, String imageUrl, LocalDateTime startDate, LocalDateTime endDate) {
+    public Advertisement(String title, String content, String imageUrl,
+                         LocalDateTime startDate, LocalDateTime endDate) {
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
@@ -38,7 +33,8 @@ public class Advertisement extends BaseEntity {
         this.endDate = endDate;
     }
 
-    public void update(String title, String content, String imageUrl, LocalDateTime startDate, LocalDateTime endDate) {
+    public void update(String title, String content, String imageUrl,
+                       LocalDateTime startDate, LocalDateTime endDate) {
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;

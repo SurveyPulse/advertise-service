@@ -7,10 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,39 +20,36 @@ public class AdvertisementController {
     private final AdvertisementService advertisementService;
 
     @GetMapping("/{advertisementId}")
-    public ResponseEntity<AdvertisementResponse> getAdvertisement(@PathVariable Long advertisementId) {
-        AdvertisementResponse advertisementResponse = advertisementService.getAdvertisement(advertisementId);
-        return ResponseEntity.ok(advertisementResponse);
+    public Mono<ResponseEntity<AdvertisementResponse>> getAdvertisement(@PathVariable String advertisementId) {
+        return advertisementService.getAdvertisement(advertisementId)
+                                   .map(ResponseEntity::ok);
     }
 
     @GetMapping
-    public ResponseEntity<List<AdvertisementResponse>> getAllAdvertisements() {
-        List<AdvertisementResponse> responses = advertisementService.getAllAdvertisements();
-        return ResponseEntity.ok(responses);
+    public Flux<AdvertisementResponse> getAllAdvertisements() {
+        return advertisementService.getAllAdvertisements();
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AdvertisementResponse> createAdvertisement(
+    public Mono<ResponseEntity<AdvertisementResponse>> createAdvertisement(
             @RequestPart("advertisement") AdvertisementRequest request,
-            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
-
-        AdvertisementResponse response = advertisementService.createAdvertisement(request, imageFile);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            @RequestPart(value = "imageFile", required = false) FilePart imageFile) {
+        return advertisementService.createAdvertisement(request, imageFile)
+                                   .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
     }
 
     @PutMapping(value = "/{advertisementId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AdvertisementResponse> updateAdvertisement(
-            @PathVariable Long advertisementId,
+    public Mono<ResponseEntity<AdvertisementResponse>> updateAdvertisement(
+            @PathVariable String advertisementId,
             @RequestPart("advertisement") AdvertisementRequest request,
-            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
-
-        AdvertisementResponse response = advertisementService.updateAdvertisement(advertisementId, request, imageFile);
-        return ResponseEntity.ok(response);
+            @RequestPart(value = "imageFile", required = false) FilePart imageFile) {
+        return advertisementService.updateAdvertisement(advertisementId, request, imageFile)
+                                   .map(ResponseEntity::ok);
     }
 
     @DeleteMapping("/{advertisementId}")
-    public ResponseEntity<Void> deleteAdvertisement(@PathVariable Long advertisementId) {
-        advertisementService.deleteAdvertisement(advertisementId);
-        return ResponseEntity.noContent().build();
+    public Mono<ResponseEntity<Void>> deleteAdvertisement(@PathVariable String advertisementId) {
+        return advertisementService.deleteAdvertisement(advertisementId)
+                                   .thenReturn(ResponseEntity.noContent().build());
     }
 }
