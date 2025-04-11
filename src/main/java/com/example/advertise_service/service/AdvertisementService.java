@@ -61,4 +61,25 @@ public class AdvertisementService {
         return AdvertisementResponse.from(savedAd);
     }
 
+    @Transactional
+    public AdvertisementResponse updateAdvertisement(Long advertisementId, AdvertisementRequest request, MultipartFile imageFile) {
+        Advertisement advertisement = advertisementRepository.findById(advertisementId)
+                                                             .orElseThrow(() -> new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND));
+
+        String imageUrl = advertisement.getImageUrl();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String fileName = fileStorageService.storeFile(imageFile);
+            imageUrl = "/uploads/" + fileName;
+        }
+
+        advertisement.update(request.title(), request.content(), request.imageUrl(), request.startDate(), request.endDate());
+        return AdvertisementResponse.from(advertisement);
+    }
+
+    @Transactional
+    public void deleteAdvertisement(Long advertisementId) {
+        Advertisement advertisement = advertisementRepository.findById(advertisementId)
+                                                             .orElseThrow(() -> new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND));
+        advertisementRepository.delete(advertisement);
+    }
 }

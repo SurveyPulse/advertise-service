@@ -39,4 +39,19 @@ public class AdvertisementController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PutMapping("/{advertisementId}")
+    public ResponseEntity<AdvertisementResponse> updateAdvertisement(
+            @PathVariable Long advertisementId,
+            @RequestPart("advertisement") AdvertisementRequest request,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
+
+        AdvertisementResponse response = advertisementService.updateAdvertisement(advertisementId, request, imageFile);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{advertisementId}")
+    public ResponseEntity<Void> deleteAdvertisement(@PathVariable Long advertisementId) {
+        advertisementService.deleteAdvertisement(advertisementId);
+        return ResponseEntity.noContent().build();
+    }
 }
