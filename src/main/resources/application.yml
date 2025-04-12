@@ -17,9 +17,9 @@ spring:
   application:
     name: advertise-service
   datasource:
-    url: jdbc:mysql://localhost:3306/advertise_service?serverTimezone=UTC
-    username: root
-    password: worldcup7!
+    url: jdbc:mysql://surveypulse-rdb.c9s06ug8a482.ap-northeast-2.rds.amazonaws.com:3306/user_service
+    username:
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:

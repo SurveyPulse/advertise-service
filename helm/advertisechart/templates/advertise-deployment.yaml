@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.spring.labels }}-deployment"
+  labels:
+    app: "{{ .Values.spring.labels }}"
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: "{{ .Values.spring.labels }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Values.spring.labels }}"
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+    spec:
+      containers:
+        - name: "{{ .Values.spring.labels }}"
+          image: "{{ .Values.spring.image.repository }}:{{ .Values.spring.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.spring.service.advertise.port }}
+          resources:
+            requests:
+              memory: "250Mi"
+              cpu: "500m"
+            limits:
+              memory: "500Mi"
+              cpu: "1000m"
+
+          env:
+            - name: DB_URL
+              value: "{{ .Values.spring.datasource.url }}"
+            - name: DB_USERNAME
+              value: "{{ .Values.spring.datasource.username }}"
+            - name: DB_PASSWORD
+              value: "{{ .Values.spring.datasource.password }}"
+            - name: AWS_S3_BUCKET_NAME
+              value: {{ index .Values.aws.s3 "bucket-name" | quote }}
+            - name: AWS_ACCESS_KEY
+              value: {{ index .Values.aws.credentials "access-key" | quote }}
+            - name: AWS_SECRET_KEY
+              value: {{ index .Values.aws.credentials "secret-key" | quote }}
+
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.spring.service.advertise.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            failureThreshold: 3
+            successThreshold: 1
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.spring.service.advertise.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
