@@ -2,6 +2,7 @@ package com.example.advertise_service.controller;
 
 import com.example.advertise_service.dto.request.AdvertisementRequest;
 import com.example.advertise_service.dto.response.AdvertisementResponse;
+import com.example.advertise_service.dto.response.AdvertisementSummaryResponse;
 import com.example.advertise_service.service.AdvertisementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,8 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,5 +54,12 @@ public class AdvertisementController {
     public Mono<ResponseEntity<Void>> deleteAdvertisement(@PathVariable String advertisementId) {
         return advertisementService.deleteAdvertisement(advertisementId)
                                    .thenReturn(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/random")
+    public Mono<ResponseEntity<List<AdvertisementSummaryResponse>>> getRandomAdvertisements(
+            @RequestParam(name = "count", defaultValue = "1") int count) {
+        return advertisementService.selectAdvertisementsWithWeight(count)
+                                   .map(ResponseEntity::ok);
     }
 }

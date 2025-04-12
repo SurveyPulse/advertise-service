@@ -7,17 +7,19 @@ import java.time.LocalDateTime;
 public record AdvertisementRequest(
         String title,
         String content,
-        String imageUrl,
+        String targetUrl,
         LocalDateTime startDate,
-        LocalDateTime endDate
+        LocalDateTime endDate,
+        double weight
 ) {
     public Advertisement toEntity() {
         return Advertisement.builder()
                             .title(title)
                             .content(content)
-                            .imageUrl(imageUrl)
+                            .targetUrl(targetUrl)
                             .startDate(startDate)
                             .endDate(endDate)
+                            .weight(weight)
                             .build();
     }
 }

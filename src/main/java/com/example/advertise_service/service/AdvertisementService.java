@@ -2,6 +2,7 @@ package com.example.advertise_service.service;
 
 import com.example.advertise_service.dto.request.AdvertisementRequest;
 import com.example.advertise_service.dto.response.AdvertisementResponse;
+import com.example.advertise_service.dto.response.AdvertisementSummaryResponse;
 import com.example.advertise_service.entity.Advertisement;
 import com.example.advertise_service.exception.AdvertisementExceptionType;
 import com.example.advertise_service.repository.AdvertisementRepository;
@@ -15,6 +16,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,6 +30,7 @@ public class AdvertisementService {
 
     private final AdvertisementRepository advertisementRepository;
     private final FileStorageService fileStorageService;
+    private final Clock clock;
 
     public Mono<AdvertisementResponse> getAdvertisement(String advertisementId) {
         log.info("조회 요청: 광고 ID {}", advertisementId);
@@ -50,10 +58,10 @@ public class AdvertisementService {
         if (imageFile != null) {
             // 파일 저장 후, 파일명이 반환되면 엔티티에 적용하여 저장
             saveOperation = fileStorageService.storeFile(imageFile)
-                                              .flatMap(fileName -> {
+                                              .flatMap(imageUrl -> {
                                                   // 엔티티 업데이트 (setter 또는 update 메서드 사용)
-                                                  advertisement.update(advertisement.getTitle(), advertisement.getContent(), fileName,
-                                                          advertisement.getStartDate(), advertisement.getEndDate());
+                                                  advertisement.update(advertisement.getTitle(), advertisement.getContent(), imageUrl, advertisement.getTargetUrl(),
+                                                          advertisement.getStartDate(), advertisement.getEndDate(), advertisement.getWeight());
                                                   return advertisementRepository.save(advertisement);
                                               });
         } else {
@@ -89,8 +97,10 @@ public class AdvertisementService {
                                                       request.title(),
                                                       request.content(),
                                                       newImageUrl,
+                                                      request.targetUrl(),
                                                       request.startDate(),
-                                                      request.endDate()
+                                                      request.endDate(),
+                                                      request.weight()
                                               );
                                               return advertisementRepository.save(advertisement)
                                                                             .doOnNext(savedAd -> log.info("광고 수정 성공: 광고 ID {}", advertisementId))
@@ -121,5 +131,51 @@ public class AdvertisementService {
                                                                          .doOnSuccess(unused -> log.info("광고 삭제 성공: 광고 ID {}", advertisementId))
                                           ).then();
                                       });
+    }
+
+    public Mono<List<AdvertisementSummaryResponse>> selectAdvertisementsWithWeight(int adCount) {
+        LocalDateTime now = LocalDateTime.now(clock);
+        return advertisementRepository.findActiveAdvertisements(now)
+                                      .collectList()
+                                      .flatMap(activeAds -> {
+                                          if (activeAds.isEmpty()) {
+                                              log.warn("활성 광고가 없습니다.");
+                                              return Mono.error(new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND));
+                                          }
+
+                                          if (adCount >= activeAds.size()) {
+                                              log.info("요청 광고 개수({})가 활성 광고 개수({})보다 많거나 같으므로 전체 광고 반환", adCount, activeAds.size());
+                                              List<AdvertisementSummaryResponse> responses = activeAds.stream()
+                                                                                                      .map(AdvertisementSummaryResponse::from)
+                                                                                                      .collect(Collectors.toList());
+                                              return Mono.just(responses);
+                                          }
+
+                                          // 가중치 기반 무작위 선택 (중복 없이)
+                                          List<Advertisement> selectedAds = new ArrayList<>();
+                                          List<Advertisement> mutableAds = new ArrayList<>(activeAds);
+                                          for (int i = 0; i < adCount; i++) {
+                                              Advertisement ad = weightedRandomSelection(mutableAds);
+                                              selectedAds.add(ad);
+                                              mutableAds.remove(ad);
+                                          }
+                                          log.info("가중치 기반 광고 {}개 선택 완료", selectedAds.size());
+                                          List<AdvertisementSummaryResponse> responses = selectedAds.stream()
+                                                                                                    .map(AdvertisementSummaryResponse::from)
+                                                                                                    .collect(Collectors.toList());
+                                          return Mono.just(responses);
+                                      });
+    }
+
+    private Advertisement weightedRandomSelection(List<Advertisement> ads) {
+        double totalWeight = ads.stream().mapToDouble(Advertisement::getWeight).sum();
+        double random = Math.random() * totalWeight;
+        for (Advertisement ad : ads) {
+            random -= ad.getWeight();
+            if (random <= 0) {
+                return ad;
+            }
+        }
+        return ads.get(ads.size() - 1);
     }
 }
