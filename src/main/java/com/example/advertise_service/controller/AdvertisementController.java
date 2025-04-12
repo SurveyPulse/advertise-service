@@ -2,6 +2,7 @@ package com.example.advertise_service.controller;
 
 import com.example.advertise_service.dto.request.AdvertisementRequest;
 import com.example.advertise_service.dto.response.AdvertisementResponse;
+import com.example.advertise_service.dto.response.AdvertisementSummaryResponse;
 import com.example.advertise_service.service.AdvertisementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -54,5 +55,12 @@ public class AdvertisementController {
     public ResponseEntity<Void> deleteAdvertisement(@PathVariable Long advertisementId) {
         advertisementService.deleteAdvertisement(advertisementId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/random")
+    public ResponseEntity<List<AdvertisementSummaryResponse>> getRandomAdvertisements(
+            @RequestParam(name = "count", defaultValue = "1") int count) {
+        List<AdvertisementSummaryResponse> responses = advertisementService.selectAdvertisementsWithWeight(count);
+        return ResponseEntity.ok(responses);
     }
 }

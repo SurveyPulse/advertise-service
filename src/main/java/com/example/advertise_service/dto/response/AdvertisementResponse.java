@@ -9,8 +9,10 @@ public record AdvertisementResponse(
         String title,
         String content,
         String imageUrl,
+        String targetUrl,
         LocalDateTime startDate,
-        LocalDateTime endDate
+        LocalDateTime endDate,
+        double weight
 ) {
     public static AdvertisementResponse from(Advertisement advertisement) {
         return new AdvertisementResponse(
@@ -18,8 +20,10 @@ public record AdvertisementResponse(
                 advertisement.getTitle(),
                 advertisement.getContent(),
                 advertisement.getImageUrl(),
+                advertisement.getTargetUrl(),
                 advertisement.getStartDate(),
-                advertisement.getEndDate()
+                advertisement.getEndDate(),
+                advertisement.getWeight()
         );
     }
 }
