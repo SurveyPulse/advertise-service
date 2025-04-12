@@ -1,0 +1,43 @@
+ingress:
+  host: buildmystudy.com
+  pathType: Prefix
+
+service:
+  port: 80
+
+spring:
+  labels: advertise
+  image:
+    repository: 440744253928.dkr.ecr.ap-northeast-2.amazonaws.com/surveypulse/advertise   # ECR에 저장된 스프링 이미지 URL
+    tag: latest
+  service:
+    port: 80
+    user:
+      name: user-service
+      port: 8081
+    survey:
+      name: survey-service
+      port: 8083
+    response:
+      name: response-service
+      port: 8084
+    report:
+      name: report-service
+      port: 8085
+    advertise:
+      name: advertise-service
+      port: 8086
+    front:
+      name: front-service
+      port: 80
+  datasource:
+    url: ""
+    username: ""
+    password: ""
+
+aws:
+  s3:
+    bucket-name: "<your-bucket-name>"  # 실제 버킷 이름 입력
+  credentials:
+    access-key: "<your-access-key>"
+    secret-key: "<your-secret-key>"

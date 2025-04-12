@@ -1,0 +1,71 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: msa-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    kubernetes.io/ingress.class: "alb"
+spec:
+  ingressClassName: alb
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /login
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Values.spring.service.user.name }}
+                port:
+                  number: {{ .Values.spring.service.user.port }}
+
+          - path: /api/users
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Values.spring.service.user.name }}
+                port:
+                  number: {{ .Values.spring.service.user.port }}
+
+          - path: /api/surveys
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Values.spring.service.survey.name }}
+                port:
+                  number: {{ .Values.spring.service.survey.port }}
+
+          - path: /api/responses
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Values.spring.service.response.name }}
+                port:
+                  number: {{ .Values.spring.service.response.port }}
+
+          - path: /api/reports
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Values.spring.service.report.name }}
+                port:
+                  number: {{ .Values.spring.service.report.port }}
+
+          - path: /api/advertisements
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Values.spring.service.advertise.name }}
+                port:
+                  number: {{ .Values.spring.service.advertise.port }}
+
+          - path: /
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Values.spring.service.front.name }}
+                port:
+                  number: {{ .Values.spring.service.front.port }}
