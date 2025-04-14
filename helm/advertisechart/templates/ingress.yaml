@@ -30,30 +30,6 @@ spec:
                 port:
                   number: {{ .Values.spring.service.port }}
 
-          - path: /api/surveys
-            pathType: {{ .Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ .Values.spring.service.survey.name }}
-                port:
-                  number: {{ .Values.spring.service.port }}
-
-          - path: /api/responses
-            pathType: {{ .Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ .Values.spring.service.response.name }}
-                port:
-                  number: {{ .Values.spring.service.port }}
-
-          - path: /api/reports
-            pathType: {{ .Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ .Values.spring.service.report.name }}
-                port:
-                  number: {{ .Values.spring.service.port }}
-
           - path: /api/advertisements
             pathType: {{ .Values.ingress.pathType }}
             backend:
@@ -62,10 +38,3 @@ spec:
                 port:
                   number: {{ .Values.spring.service.port }}
 
-          - path: /
-            pathType: {{ .Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ .Values.spring.service.front.name }}
-                port:
-                  number: {{ .Values.spring.service.front.port }}
