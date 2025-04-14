@@ -46,7 +46,7 @@ dependencies {
 
 	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.0.2'
 
-	implementation 'com.github.SurveyPulse:global-service:v1.0.7:plain'
+	implementation 'com.github.SurveyPulse:global-service:v1.0.8:plain'
 
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'

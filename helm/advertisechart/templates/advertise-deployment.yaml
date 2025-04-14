@@ -24,19 +24,13 @@ spec:
             - containerPort: {{ .Values.spring.service.advertise.port }}
           resources:
             requests:
-              memory: "250Mi"
-              cpu: "500m"
+              cpu: "600m"
+              memory: "1200Mi"
             limits:
-              memory: "500Mi"
-              cpu: "1000m"
+              cpu: "1200m"
+              memory: "2400Mi"
 
           env:
-            - name: DB_URL
-              value: "{{ .Values.spring.datasource.url }}"
-            - name: DB_USERNAME
-              value: "{{ .Values.spring.datasource.username }}"
-            - name: DB_PASSWORD
-              value: "{{ .Values.spring.datasource.password }}"
             - name: AWS_S3_BUCKET_NAME
               value: {{ index .Values.aws.s3 "bucket-name" | quote }}
             - name: AWS_ACCESS_KEY
