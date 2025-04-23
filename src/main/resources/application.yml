@@ -18,7 +18,8 @@ spring:
     name: advertise-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/advertise_service
+      uri: "mongodb://michi2003:asdf2003@surveypulse-mongo-db.cluster-c9s06ug8a482.ap-northeast-2.docdb.amazonaws.com:27017/advertise_service?ssl=true&sslInvalidHostNameAllowed=true&sslInvalidCertificateAllowed=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+
   jwt:
     issuer: dsada
     secret: your-very-strong-secret-key-which-is-at-least-32-characters-long

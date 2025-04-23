@@ -2,6 +2,7 @@ package com.example.advertise_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -12,7 +13,8 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 @SpringBootApplication(exclude = {
 		SecurityAutoConfiguration.class,
 		HibernateJpaAutoConfiguration.class,
-		DataSourceAutoConfiguration.class  // 이 옵션을 추가하면 JPA 및 데이터소스 자동 구성이 제외됩니다.
+		DataSourceAutoConfiguration.class,  // 이 옵션을 추가하면 JPA 및 데이터소스 자동 구성이 제외됩니다.
+		JpaRepositoriesAutoConfiguration.class
 })
 @EnableDiscoveryClient
 @ComponentScan(basePackages = {"com.example.advertise_service", "com.example.global"})
