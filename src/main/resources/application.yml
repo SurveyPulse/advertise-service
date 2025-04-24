@@ -17,10 +17,19 @@ spring:
   application:
     name: advertise-service
   datasource:
-    url: jdbc:mysql://surveypulse-rds.c9s06ug8a482.ap-northeast-2.rds.amazonaws.com:3306/advertise_service
+    url: jdbc:mysql://
     username:
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host:
+    port: 6379
+    timeout: 3s
+    lettuce:
+      pool:
+        max-active: 12
+        max-idle: 2
+        min-idle: 1
 
   jpa:
     hibernate:
@@ -43,20 +52,10 @@ spring:
     issuer: dsada
     secret: your-very-strong-secret-key-which-is-at-least-32-characters-long
 
-logging:
-  level:
-    com.example.response_service.client: DEBUG
-    feign.Logger: DEBUG
-
 feign:
   survey-service-url: http://localhost:8083
   user-service-url: http://localhost:8081
   report-service-url: http://localhost:8085
-
-  client:
-    config:
-      default:
-        loggerLevel: FULL
 
 resilience4j.circuitbreaker:
   instances:
@@ -82,3 +81,8 @@ aws:
   credentials :
     access-key:
     secret-key:
+
+logging:
+  level:
+    # Spring Cache 히트/미스 로그 확인
+    org.springframework.cache: DEBUG

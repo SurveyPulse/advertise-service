@@ -9,6 +9,7 @@ import com.example.advertise_service.repository.AdvertisementRepository;
 import com.example.global.exception.type.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +18,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +29,7 @@ public class AdvertisementService {
 
     private final AdvertisementRepository advertisementRepository;
     private final FileStorageService fileStorageService;
+    private final RedisTemplate<String, List<AdvertisementSummaryResponse>> redisTemplate;
     private final Clock clock;
 
     @Transactional(readOnly = true)
@@ -128,56 +131,53 @@ public class AdvertisementService {
 
     @Transactional(readOnly = true)
     public List<AdvertisementSummaryResponse> selectAdvertisementsWithWeight(int adCount) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        // 현재 활성화된 광고들을 조회 (시작일 ≤ 현재 ≤ 종료일)
-        List<Advertisement> activeAds = advertisementRepository
-                .findActiveAdvertisements(now);
+        String cacheKey = "ads:sampled:" + adCount;
 
+        // 1) 캐시 조회
+        List<AdvertisementSummaryResponse> cached =
+                redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            log.info("Redis 캐시 히트: {}", cacheKey);
+            return cached;
+        }
+
+        // 2) 캐시 MISS → 기존 로직
+        LocalDateTime now = LocalDateTime.now(clock);
+        List<Advertisement> activeAds = advertisementRepository.findActiveAdvertisements(now);
         if (activeAds.isEmpty()) {
             log.warn("활성 광고가 없습니다.");
             throw new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND);
         }
 
-        // 요청한 광고 개수가 활성 광고 수보다 클 경우 활성 광고 모두 반환합니다.
-        if (adCount >= activeAds.size()) {
-            log.info("요청 광고 개수({})가 활성 광고 개수({})보다 많거나 같으므로 전체 광고 반환", adCount, activeAds.size());
-            return activeAds.stream()
-                            .map(AdvertisementSummaryResponse::from)
-                            .collect(Collectors.toList());
+        List<Advertisement> mutable = new ArrayList<>(activeAds);
+        List<Advertisement> picked = new ArrayList<>();
+        for (int i = 0; i < adCount && !mutable.isEmpty(); i++) {
+            Advertisement ad = weightedRandomSelection(mutable);
+            picked.add(ad);
+            mutable.remove(ad);
         }
+        log.info("가중치 기반 광고 {}개 샘플링 완료", picked.size());
 
-        // 가중치 기반 무작위 선택(중복 없이) 구현
-        List<Advertisement> selectedAds = new ArrayList<>();
-        List<Advertisement> mutableAds = new ArrayList<>(activeAds);
+        List<AdvertisementSummaryResponse> result =
+                picked.stream()
+                      .map(AdvertisementSummaryResponse::from)
+                      .collect(Collectors.toList());
 
-        for (int i = 0; i < adCount; i++) {
-            Advertisement ad = weightedRandomSelection(mutableAds);
-            selectedAds.add(ad);
-            // 이미 선택된 광고는 목록에서 제거해 중복 선택 방지
-            mutableAds.remove(ad);
-        }
+        // 3) Redis에 저장 (TTL 20초)
+        redisTemplate.opsForValue()
+                     .set(cacheKey, result, 20, TimeUnit.SECONDS);
+        log.info("Redis 캐시 저장: {} (TTL=20s)", cacheKey);
 
-        log.info("가중치 기반 광고 {}개 선택 완료", selectedAds.size());
-        return selectedAds.stream()
-                          .map(AdvertisementSummaryResponse::from)
-                          .collect(Collectors.toList());
+        return result;
     }
 
-
     private Advertisement weightedRandomSelection(List<Advertisement> ads) {
-        // 전체 광고 가중치 합 구하기
-        double totalWeight = ads.stream().mapToDouble(Advertisement::getWeight).sum();
-
-        double random = Math.random() * totalWeight;
-
-        // 순회하면서 난수가 포함되는 광고 선택
+        double total = ads.stream().mapToDouble(Advertisement::getWeight).sum();
+        double r = Math.random() * total;
         for (Advertisement ad : ads) {
-            random -= ad.getWeight();
-            if (random <= 0) {
-                return ad;
-            }
+            r -= ad.getWeight();
+            if (r <= 0) return ad;
         }
-        // 보통 위 로직에서 이미 반환되지만, 혹시 모를 경우 마지막 광고 반환
         return ads.get(ads.size() - 1);
     }
 }

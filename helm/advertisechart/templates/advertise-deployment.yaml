@@ -30,14 +30,6 @@ spec:
               cpu: "1200m"
               memory: "2400Mi"
 
-          env:
-            - name: AWS_S3_BUCKET_NAME
-              value: {{ index .Values.aws.s3 "bucket-name" | quote }}
-            - name: AWS_ACCESS_KEY
-              value: {{ index .Values.aws.credentials "access-key" | quote }}
-            - name: AWS_SECRET_KEY
-              value: {{ index .Values.aws.credentials "secret-key" | quote }}
-
 
           livenessProbe:
             httpGet:
