@@ -18,7 +18,7 @@ spring:
     name: advertise-service
   data:
     mongodb:
-      uri: "mongodb://michi2003:asdf2003@surveypulse-mongo-db.cluster-c9s06ug8a482.ap-northeast-2.docdb.amazonaws.com:27017/advertise_service?ssl=true&sslInvalidHostNameAllowed=true&sslInvalidCertificateAllowed=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+      uri: "mongodb+srv://michi2003:asdf2003@cluster0.iij29.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0"
 
   jwt:
     issuer: dsada
@@ -33,11 +33,6 @@ feign:
   survey-service-url: http://localhost:8083
   user-service-url: http://localhost:8081
   report-service-url: http://localhost:8085
-
-  client:
-    config:
-      default:
-        loggerLevel: FULL
 
 resilience4j.circuitbreaker:
   instances:

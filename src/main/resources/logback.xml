@@ -1,14 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- 환경 변수 정의 -->
-    <property name="SERVICE_NAME" value="advertise-service"/>
-    <property name="ENV" value="dev"/>
+    <!-- 환경 변수로부터 설정 -->
+    <property name="SERVICE_NAME" value="${SERVICE_NAME:-advertise-service}"/>
+    <property name="ENV" value="${ENV:-dev}"/>
     <property name="LOG_DIR" value="logs/${SERVICE_NAME}-${ENV}"/>
     <property name="LOG_FILE" value="${LOG_DIR}/application.log"/>
 
-    <!-- Logstash로 전송할 Appender -->
+    <!-- Logstash 호스트/포트 환경 변수 -->
+    <property name="LOGSTASH_HOST" value="${LOGSTASH_HOST:-logstash.elk.svc.cluster.local}"/>
+    <property name="LOGSTASH_PORT" value="${LOGSTASH_PORT:-5044}"/>
+
+    <!-- Logstash로 JSON 전송 -->
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>localhost:5044</destination>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+        <destination>${LOGSTASH_HOST}:${LOGSTASH_PORT}</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"${SERVICE_NAME}","env":"${ENV}"}</customFields>
+        </encoder>
     </appender>
 
     <!-- 콘솔 출력 -->
@@ -30,10 +37,10 @@
         </encoder>
     </appender>
 
-    <!-- Logger 설정 -->
-    <root level="info">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-        <appender-ref ref="LOGSTASH" />
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="LOGSTASH"/>
     </root>
 </configuration>

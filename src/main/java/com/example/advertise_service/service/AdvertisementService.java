@@ -135,36 +135,46 @@ public class AdvertisementService {
 
     public Mono<List<AdvertisementSummaryResponse>> selectAdvertisementsWithWeight(int adCount) {
         LocalDateTime now = LocalDateTime.now(clock);
-        return advertisementRepository.findActiveAdvertisements(now)
-                                      .collectList()
-                                      .flatMap(activeAds -> {
-                                          if (activeAds.isEmpty()) {
-                                              log.warn("활성 광고가 없습니다.");
-                                              return Mono.error(new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND));
-                                          }
+        return fetchActiveAds(now)
+                .collectList()
+                .flatMap(this::ensureNotEmpty)
+                .flatMap(activeAds -> sampleAds(activeAds, adCount))
+                .map(this::toResponseDtos);
+    }
 
-                                          if (adCount >= activeAds.size()) {
-                                              log.info("요청 광고 개수({})가 활성 광고 개수({})보다 많거나 같으므로 전체 광고 반환", adCount, activeAds.size());
-                                              List<AdvertisementSummaryResponse> responses = activeAds.stream()
-                                                                                                      .map(AdvertisementSummaryResponse::from)
-                                                                                                      .collect(Collectors.toList());
-                                              return Mono.just(responses);
-                                          }
+    // 1) 활성 광고 조회
+    private Flux<Advertisement> fetchActiveAds(LocalDateTime now) {
+        return advertisementRepository.findActiveAdvertisements(now);
+    }
 
-                                          // 가중치 기반 무작위 선택 (중복 없이)
-                                          List<Advertisement> selectedAds = new ArrayList<>();
-                                          List<Advertisement> mutableAds = new ArrayList<>(activeAds);
-                                          for (int i = 0; i < adCount; i++) {
-                                              Advertisement ad = weightedRandomSelection(mutableAds);
-                                              selectedAds.add(ad);
-                                              mutableAds.remove(ad);
-                                          }
-                                          log.info("가중치 기반 광고 {}개 선택 완료", selectedAds.size());
-                                          List<AdvertisementSummaryResponse> responses = selectedAds.stream()
-                                                                                                    .map(AdvertisementSummaryResponse::from)
-                                                                                                    .collect(Collectors.toList());
-                                          return Mono.just(responses);
-                                      });
+    // 2) 빈 리스트 검사
+    private <T> Mono<List<T>> ensureNotEmpty(List<T> list) {
+        if (list.isEmpty()) {
+            return Mono.error(new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND));
+        }
+        return Mono.just(list);
+    }
+
+    // 3) 가중치 샘플링을 별도 스케줄러로 offload
+    private Mono<List<Advertisement>> sampleAds(List<Advertisement> ads, int count) {
+        return Mono.fromCallable(() -> {
+                       List<Advertisement> source = new ArrayList<>(ads);
+                       List<Advertisement> picked = new ArrayList<>();
+                       for (int i = 0; i < count && !source.isEmpty(); i++) {
+                           Advertisement ad = weightedRandomSelection(source);
+                           picked.add(ad);
+                           source.remove(ad);
+                       }
+                       return picked;
+                   })
+                   .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    // 4) DTO 변환
+    private List<AdvertisementSummaryResponse> toResponseDtos(List<Advertisement> ads) {
+        return ads.stream()
+                  .map(AdvertisementSummaryResponse::from)
+                  .collect(Collectors.toList());
     }
 
     private Advertisement weightedRandomSelection(List<Advertisement> ads) {
