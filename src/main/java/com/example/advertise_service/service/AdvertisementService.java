@@ -9,6 +9,7 @@ import com.example.advertise_service.repository.AdvertisementRepository;
 import com.example.global.exception.type.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ public class AdvertisementService {
     private final AdvertisementRepository advertisementRepository;
     private final FileStorageService fileStorageService;
     private final Clock clock;
+    private final ReactiveRedisOperations<String, List<AdvertisementSummaryResponse>> redisOps;
 
     public Mono<AdvertisementResponse> getAdvertisement(String advertisementId) {
         log.info("조회 요청: 광고 ID {}", advertisementId);
@@ -50,6 +53,7 @@ public class AdvertisementService {
                                       .doOnComplete(() -> log.info("전체 광고 목록 조회 완료"));
     }
 
+    @Transactional
     public Mono<AdvertisementResponse> createAdvertisement(AdvertisementRequest request, FilePart imageFile) {
         // request를 통해 동기적으로 엔티티 생성
         Advertisement advertisement = request.toEntity();
@@ -73,6 +77,7 @@ public class AdvertisementService {
                 .map(AdvertisementResponse::from);
     }
 
+    @Transactional
     public Mono<AdvertisementResponse> updateAdvertisement(String advertisementId, AdvertisementRequest request, FilePart imageFile) {
         log.info("광고 수정 요청: 광고 ID {}", advertisementId);
         return advertisementRepository.findById(advertisementId)
@@ -109,6 +114,7 @@ public class AdvertisementService {
                                       });
     }
 
+    @Transactional
     public Mono<Void> deleteAdvertisement(String advertisementId) {
         log.info("광고 삭제 요청: 광고 ID {}", advertisementId);
         return advertisementRepository.findById(advertisementId)
@@ -134,20 +140,31 @@ public class AdvertisementService {
     }
 
     public Mono<List<AdvertisementSummaryResponse>> selectAdvertisementsWithWeight(int adCount) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        return fetchActiveAds(now)
-                .collectList()
-                .flatMap(this::ensureNotEmpty)
-                .flatMap(activeAds -> sampleAds(activeAds, adCount))
-                .map(this::toResponseDtos);
+        String cacheKey = "ads:sampled:" + adCount;
+        return redisOps.opsForValue().get(cacheKey)
+                       .flatMap(cached -> {
+                           log.info("Redis 캐시 히트: {}", cacheKey);
+                           return Mono.just(cached);
+                       })
+                       .switchIfEmpty(
+                               fetchActiveAds(LocalDateTime.now(clock))
+                                       .collectList()
+                                       .flatMap(this::ensureNotEmpty)
+                                       .flatMap(activeAds -> sampleAds(activeAds, adCount))
+                                       .map(this::toResponseDtos)
+                                       .flatMap(result ->
+                                               redisOps.opsForValue()
+                                                       .set(cacheKey, result, Duration.ofSeconds(20))
+                                                       .doOnSuccess(u -> log.info("Redis 캐시 저장: {} (TTL=5s)", cacheKey))
+                                                       .thenReturn(result)
+                                       )
+                       );
     }
 
-    // 1) 활성 광고 조회
     private Flux<Advertisement> fetchActiveAds(LocalDateTime now) {
         return advertisementRepository.findActiveAdvertisements(now);
     }
 
-    // 2) 빈 리스트 검사
     private <T> Mono<List<T>> ensureNotEmpty(List<T> list) {
         if (list.isEmpty()) {
             return Mono.error(new NotFoundException(AdvertisementExceptionType.ADVERTISEMENT_NOT_FOUND));
@@ -155,7 +172,6 @@ public class AdvertisementService {
         return Mono.just(list);
     }
 
-    // 3) 가중치 샘플링을 별도 스케줄러로 offload
     private Mono<List<Advertisement>> sampleAds(List<Advertisement> ads, int count) {
         return Mono.fromCallable(() -> {
                        List<Advertisement> source = new ArrayList<>(ads);
@@ -167,10 +183,9 @@ public class AdvertisementService {
                        }
                        return picked;
                    })
-                   .subscribeOn(Schedulers.boundedElastic());
+                   .subscribeOn(Schedulers.parallel());
     }
 
-    // 4) DTO 변환
     private List<AdvertisementSummaryResponse> toResponseDtos(List<Advertisement> ads) {
         return ads.stream()
                   .map(AdvertisementSummaryResponse::from)
