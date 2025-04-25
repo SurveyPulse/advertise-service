@@ -20,7 +20,7 @@ spring:
     mongodb:
       uri: "mongodb+srv://michi2003:asdf2003@cluster0.iij29.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0"
   redis:
-    host:
+    host: surveypulse-cache-server.hxw170.ng.0001.apn2.cache.amazonaws.com
     port: 6379
     timeout: 3s
     lettuce:
@@ -62,7 +62,7 @@ resilience4j.circuitbreaker:
 aws:
   region: ap-northeast-2
   s3:
-    bucket-name:
+    bucket-name: surveypulse-advertisement-files
   credentials :
-    access-key:
-    secret-key:
+    access-key: AKIAWNHTHTHUC7HBKPWU
+    secret-key: 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
