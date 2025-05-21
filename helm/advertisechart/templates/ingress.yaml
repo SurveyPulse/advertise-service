@@ -16,22 +16,6 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /login
-            pathType: {{ .Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ .Values.spring.service.user.name }}
-                port:
-                  number: {{ .Values.spring.service.port }}
-
-          - path: /api/users
-            pathType: {{ .Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ .Values.spring.service.user.name }}
-                port:
-                  number: {{ .Values.spring.service.port }}
-
           - path: /api/advertisements
             pathType: {{ .Values.ingress.pathType }}
             backend:

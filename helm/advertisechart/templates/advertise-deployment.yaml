@@ -15,8 +15,13 @@ spec:
       labels:
         app: "{{ .Values.spring.labels }}"
       annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.spring.service.report.port }}"
+        prometheus.io/path: "/actuator/prometheus"
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
+      nodeSelector:
+        role: app
       containers:
         - name: "{{ .Values.spring.labels }}"
           image: "{{ .Values.spring.image.repository }}:{{ .Values.spring.image.tag }}"

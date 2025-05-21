@@ -18,9 +18,9 @@ spring:
     name: advertise-service
   data:
     mongodb:
-      uri: "mongodb+srv://michi2003:asdf2003@cluster0.iij29.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0"
+      uri:
   redis:
-    host: surveypulse-cache-server.hxw170.ng.0001.apn2.cache.amazonaws.com
+    host:
     port: 6379
     timeout: 3s
     lettuce:
@@ -64,5 +64,5 @@ aws:
   s3:
     bucket-name: surveypulse-advertisement-files
   credentials :
-    access-key: AKIAWNHTHTHUC7HBKPWU
-    secret-key: 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
+    access-key:
+    secret-key:

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class Advertisement {
 
     @Id
-    private String advertisementId;  // MongoDB ObjectId 혹은 문자열
+    private String advertisementId;
 
     private String title;
 
