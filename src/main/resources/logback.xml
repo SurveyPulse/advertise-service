@@ -7,8 +7,8 @@
     <property name="LOG_FILE" value="${LOG_DIR}/application.log"/>
 
     <!-- Logstash 호스트/포트 환경 변수 -->
-    <property name="LOGSTASH_HOST" value="${LOGSTASH_HOST:-logstash.elk.svc.cluster.local}"/>
-    <property name="LOGSTASH_PORT" value="${LOGSTASH_PORT:-5044}"/>
+    <property name="LOGSTASH_HOST" value="logstash-input.elk.svc.cluster.local"/>
+    <property name="LOGSTASH_PORT" value="5044"/>
 
     <!-- Logstash로 JSON 전송 -->
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
