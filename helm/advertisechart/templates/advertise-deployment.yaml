@@ -35,13 +35,12 @@ spec:
               cpu: "1200m"
               memory: "2400Mi"
 
-
           livenessProbe:
             httpGet:
               path: /api/health
               port: {{ .Values.spring.service.advertise.port }}
             initialDelaySeconds: 30
-            periodSeconds: 60
+            periodSeconds: 15
             failureThreshold: 3
             successThreshold: 1
 
