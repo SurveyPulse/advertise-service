@@ -41,4 +41,7 @@ spec:
       policies:
         - type: {{ .Values.autoscaling.behavior.scaleDown.policies[0].type }}
           value: {{ .Values.autoscaling.behavior.scaleDown.policies[0].value }}
-          periodSeconds: {{ .Values.autoscaling.behavior.scaleDown.policies[0].periodSeconds }} {{- end }}
+          periodSeconds: {{ .Values.autoscaling.behavior.scaleDown.policies[0].periodSeconds }}
+        - type: {{ .Values.autoscaling.behavior.scaleDown.policies[1].type }}
+          value: {{ .Values.autoscaling.behavior.scaleDown.policies[1].value }}
+          periodSeconds: {{ .Values.autoscaling.behavior.scaleDown.policies[1].periodSeconds }} {{- end }}
