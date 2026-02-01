@@ -36,12 +36,20 @@ spec:
                 command: [ "/bin/sh", "-c", "sleep 20" ]
 
           env:
-            - name: SPRING_DATASOURCE_URL
-              value: {{ .Values.spring.datasource.url | quote }}
-            - name: SPRING_DATASOURCE_USERNAME
-              value: {{ .Values.spring.datasource.username | quote }}
-            - name: SPRING_DATASOURCE_PASSWORD
-              value: {{ .Values.spring.datasource.password | quote }}
+            - name: SPRING_DATA_MONGODB_URI
+              value: {{ .Values.spring.mongodb.uri | quote }}
+            - name: SPRING_REDIS_HOST
+              value: {{ .Values.spring.redis.host | quote }}
+            - name: SPRING_REDIS_PORT
+              value: {{ .Values.spring.redis.port | default 6379 | quote }}
+            - name: AWS_S3_BUCKET_NAME
+              value: {{ .Values.aws.s3.bucketName | quote }}
+            - name: AWS_CREDENTIALS_ACCESS_KEY
+              value: {{ .Values.aws.credentials.accessKey | quote }}
+            - name: AWS_CREDENTIALS_SECRET_KEY
+              value: {{ .Values.aws.credentials.secretKey | quote }}
+            - name: AWS_REGION
+              value: "ap-northeast-2"
 
           ports:
             - containerPort: {{ .Values.spring.service.advertise.port }}
