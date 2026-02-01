@@ -41,23 +41,6 @@ logging:
     com.example.response_service.client: DEBUG
     feign.Logger: DEBUG
 
-resilience4j.circuitbreaker:
-  instances:
-    userService:
-      registerHealthIndicator: true
-      slidingWindowSize: 10
-      minimumNumberOfCalls: 5
-      permittedNumberOfCallsInHalfOpenState: 3
-      failureRateThreshold: 50
-      waitDurationInOpenState: 10s
-    surveyService:
-      registerHealthIndicator: true
-      slidingWindowSize: 10
-      minimumNumberOfCalls: 5
-      permittedNumberOfCallsInHalfOpenState: 3
-      failureRateThreshold: 50
-      waitDurationInOpenState: 10s
-
 management:
   tracing:
     sampling:
