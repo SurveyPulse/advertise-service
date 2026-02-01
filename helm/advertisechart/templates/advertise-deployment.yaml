@@ -6,7 +6,9 @@ metadata:
     app: "{{ .Values.spring.labels }}"
 
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: 3
+  {{- end }}
   selector:
     matchLabels:
       app: "{{ .Values.spring.labels }}"
@@ -20,11 +22,27 @@ spec:
         prometheus.io/path: "/actuator/prometheus"
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
+      terminationGracePeriodSeconds: 60
       nodeSelector:
         role: app
       containers:
         - name: "{{ .Values.spring.labels }}"
           image: "{{ .Values.spring.image.repository }}:{{ .Values.spring.image.tag }}"
+          imagePullPolicy: Always
+          # Ingress 라우팅 제외될 때까지 시간 벌어주기
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "/bin/sh", "-c", "sleep 20" ]
+
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.spring.datasource.url | quote }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.spring.datasource.username | quote }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: {{ .Values.spring.datasource.password | quote }}
+
           ports:
             - containerPort: {{ .Values.spring.service.advertise.port }}
           resources:
