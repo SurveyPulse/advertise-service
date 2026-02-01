@@ -32,11 +32,11 @@ jobs:
 
       - name: Inject secrets into application.yml
         run: |
-          sed -i 's|AWS_ACCESS_KEY_ID_PLACEHOLDER|${{ secrets.AWS_ACCESS_KEY_ID }}|g' src/main/resources/application.yml
-          sed -i 's|AWS_SECRET_ACCESS_KEY_PLACEHOLDER|${{ secrets.AWS_SECRET_ACCESS_KEY }}|g' src/main/resources/application.yml
-          sed -i 's|DB_URL_PLACEHOLDER|${{ secrets.SPRING_ADVERTISE_DATASOURCE_URL }}|g' src/main/resources/application.yml
-          sed -i 's|DB_USERNAME_PLACEHOLDER|${{ secrets.SPRING_ADVERTISE_DATASOURCE_USERNAME }}|g' src/main/resources/application.yml
-          sed -i 's|DB_PASSWORD_PLACEHOLDER|${{ secrets.SPRING_ADVERTISE_DATASOURCE_PASSWORD }}|g' src/main/resources/application.yml
+          sed -i 's|AWS_S3_BUCKET_PLACEHOLDER|${{ vars.AWS_S3_BUCKET_NAME }}|g' src/main/resources/application.yml
+          sed -i 's|AWS_ACCESS_KEY_PLACEHOLDER|${{ secrets.AWS_ACCESS_KEY }}|g' src/main/resources/application.yml
+          sed -i 's|AWS_SECRET_KEY_PLACEHOLDER|${{ secrets.AWS_SECRET_KEY }}|g' src/main/resources/application.yml
+          sed -i 's|MONGO_URI_PLACEHOLDER|${{ secrets.SPRING_MONGODB_URI }}|g' src/main/resources/application.yml
+          sed -i 's|REDIS_HOST_PLACEHOLDER|${{ secrets.SPRING_REDIS_HOST }}|g' src/main/resources/application.yml
 
       - name: Give gradlew execute permission
         run: chmod +x ./gradlew
@@ -64,7 +64,7 @@ jobs:
 
   image-build:
     runs-on: ubuntu-latest
-    needs: [test, set-environment]
+    needs: [set-environment]
     permissions:
       id-token: write
       contents: read
@@ -108,7 +108,7 @@ jobs:
         id: credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       - name: setup kubectl
         uses: azure/setup-kubectl@v3
@@ -127,9 +127,12 @@ jobs:
           helm upgrade --install advertise-app ./helm/advertisechart --create-namespace --namespace advertise \
           --set image.tag=${{ github.sha }} \
           --set image.repository=${{ secrets.REGISTRY }}/${{ vars.ADVERTISE_REPOSITORY }} \
-          --set spring.datasource.url=${{ secrets.SPRING_ADVERTISE_DATASOURCE_URL }} \
-          --set spring.datasource.username=${{ secrets.SPRING_ADVERTISE_DATASOURCE_USERNAME }} \
-          --set spring.datasource.password=${{ secrets.SPRING_ADVERTISE_DATASOURCE_PASSWORD }} \
+          --set spring.mongodb.uri=${{ secrets.SPRING_MONGODB_URI }} \
+          --set spring.redis.host=${{ secrets.SPRING_REDIS_HOST }} \
+          --set aws.s3.bucket-name=${{ vars.AWS_S3_BUCKET_NAME }} \
+          --set aws.credentials.access-key=${{ secrets.AWS_ACCESS_KEY }} \
+          --set aws.credentials.secret-key=${{ secrets.AWS_SECRET_KEY }}
+
       - name: notify
         if: always()
         uses: slackapi/slack-github-action@v1.24.0
