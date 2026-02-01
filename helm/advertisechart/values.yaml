@@ -34,13 +34,18 @@ spring:
     url: ""
     username: ""
     password: ""
+  mongodb:
+    uri: ""
+  redis:
+    host: "redis-cluster-url" # 실제 주소
+    port: 6379
 
 aws:
   s3:
-    bucket-name: "<your-bucket-name>"  # 실제 버킷 이름 입력
+    bucketName: "<your-bucket-name>"  # 실제 버킷 이름 입력
   credentials:
-    access-key: "<your-access-key>"
-    secret-key: "<your-secret-key>"
+    accessKey: "<your-access-key>"
+    secretKey: "<your-secret-key>"
 
 autoscaling:
   enabled: true
@@ -65,7 +70,7 @@ autoscaling:
 
   behavior:
     scaleUp:
-      stabilizationWindowSeconds: 120
+      stabilizationWindowSeconds: 0
       policies:
         - type: Percent
           value: 100
